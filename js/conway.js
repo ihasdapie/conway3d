@@ -1,20 +1,21 @@
 import * as THREE from "./three.module.js"
 
+const BUILTIN_INITIALS = {
+    "growth": [[4,4,1], [4,5,2], [4,6,3], [5,6,1], [6, 5, 2]],
+
+}
 
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
 
-const live_color = 0xffffff;
-const dead_color = 0x000000;
+
+function sleep(time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}
 
 
 
 class conway_cell {
-    constructor(x, y, z, geometry, visible) {
+    constructor(x, y, z, geometry, visible, scene) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -27,19 +28,12 @@ class conway_cell {
                 transparent: true,
                 opacity: 0.5,
             } ));
-        /* this.mesh.add(
-            new THREE.LineSegments(
-                new THREE.EdgesGeometry(this.mesh.geometry),
-                new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 4})
-            )
-        ); */
+        this.mesh.position.set(x, y, z);
         scene.add(this.mesh);
         
         if (!this.visible) {
             this.mesh.visible = false;
         }
-
-        this.mesh.position.set(x, y, z);
     }
 
     update() {
@@ -54,22 +48,18 @@ class conway_cell {
         }
         // console.log(this.x, this.y, this.alive);
     }
-    set_visual () {
-        if (this.alive) {
-            this.mesh.visible = true;
-        } else {
-            this.mesh.visible = false;
-        }
+    render () {
+        this.mesh.visible = this.alive
     }
 
     toggle_cell () {
         this.alive = !this.alive;
-        this.set_visual();
+        this.render();
     }
 }
 
 class conway_board {
-    constructor (width, height, depth, spacing, geometry) {
+    constructor (width, height, depth, geometry, scene) {
         this.width = width;
         this.height = height;
         this.depth = depth;
@@ -81,13 +71,24 @@ class conway_board {
                 this.cells[x][y] = [];
                 for (let z = 0; z < depth +2; z++) {
                     var visible = !(x == 0 || y == 0 || z == 0 || x == width+1 || y == height+1 || z == depth + 1); // account for the border
-                    this.cells[x][y].push(new conway_cell(x, y, z, geometry, visible));
+                    this.cells[x][y].push(new conway_cell(x, y, z, geometry, visible, scene));
                     this.group.add(this.cells[x][y][z].mesh);
                 }
             }
         }
         scene.add(this.group);
 
+    }
+
+    reset () {
+        for (let x = 0; x < this.width; x++) {
+            for (let y = 0; y < this.height; y++) {
+                for (let z = 0; z < this.height; z++) {
+                    this.get_cell(x, y, z).alive = false;
+                    this.get_cell(x, y, z).set_visual();
+                }
+            }
+        }
     }
 
 
@@ -120,17 +121,20 @@ class conway_board {
         }
     }
 
-    set_visual () {
+    render () {
+        // TODO: Optimize to render only changed ones
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 for (let z = 0; z < this.height; z++) {
-                this.get_cell(x, y, z).set_visual();
+                this.get_cell(x, y, z).render()
                 }
             }
         }
+        this.renderer.render(this.scene, this.camera);
     }
 
     update() {
+        this.render();
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 for (let z = 0; z < this.height; z++) {
@@ -138,64 +142,98 @@ class conway_board {
                 }
             }
         }
-        this.set_visual(); // just for now
+    }
+
+    async run_conway() {
+        while (true) {
+            this.render();
+            board.set_neighbours();
+            board.update();
+            // board.group.rotateOnAxis(new THREE.Vector3(1, 1, 0), 0.1);
+            await sleep(1000);
+        }
     }
 
 } 
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
+class conway_widget {
+    constructor (canvas_width, canvas_height, board_x, board_y, board_z) {
+        this.canvas = document.createElement("canvas");
+        this.canvas.width = canvas_width;
+        this.canvas.height = canvas_height;
+        this.div = document.createElement("div");
+        this.dimension_inputs = [this.make_input("Width (x)", "500") , this.make_input("Height (y)", "500"), this.make_input("Depth (z)", "500")];
 
-const board = new conway_board(30, 30, 30, 1, geometry);
-
-// give it an initial state
-var init_set = [[4,4,1], [4,5,2], [4,6,3], [5,6,1], [6, 5, 2]]
- 
-for (const [x, y, z] of init_set) {
-    board.get_cell(x, y, z).toggle_cell();
-}
-
-board.set_visual();
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera( 75, this.canvas.width / this.canvas.height, 0.1, 1000 );
 
 
+        this.camera.position.x = 10; // TODO: Remove
+        this.camera.position.y = 10;
+        this.camera.position.z = 50;
 
-// board.update();
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: this.canvas
+        });
+        this.geometry = new THREE.BoxGeometry(1, 1, 1);
+        this.board = new conway_board(board_x, board_y, board_z, this.geometry, this.scene);
 
-camera.position.x = 10;
-camera.position.y = 10;
-camera.position.z = 50;
-/* camera.rotateX(Math.PI/10);
-camera.rotateY(Math.PI/10);   */
+        this.init_type = "growth"
 
-
-
-function sleep(time) {
-    return new Promise((resolve) => setTimeout(resolve, time));
-}
-
-async function run_conway() {
-    while (true) {
-        renderer.render( scene, camera );
-        board.set_neighbours();
-        board.update();
-        board.group.rotateOnAxis(new THREE.Vector3(1, 1, 0), 0.1);
-        await sleep(100);
+        this.build_widget();
+        this.seed();
     }
+
+    restart () {
+
+    }
+
+    seed (init_type) {
+        for (const [x, y, z] of BUILTIN_INITIALS[this.init_type]) {
+            this.board.get_cell(x, y, z).toggle_cell();
+        }
+    }
+
+    build_widget () {
+        for (const input of this.dimension_inputs) {
+            this.div.appendChild(input);
+        }
+        this.div.appendChild(this.canvas);
+        this.div.appendChild(this.canvas);
+        document.body.appendChild(this.renderer.domElement);
+    }
+    
+    make_input (prompt, default_value) {
+        var input = document.createElement("input");
+        input.type = "text";
+        input.onchange = function() {
+            if (input.value == "") {
+                input.value = default_value;
+            }
+        }
+        var label = document.createElement("label");
+        label.innerHTML = prompt;
+        label.appendChild(input);
+        return label;
+    }
+
+
+
 }
 
 
-run_conway();
 
 
 
 
 
 
+function make_conway (canvas_width, canvas_height, board_x, board_y, board_z) {
+    widget = new conway_widget(canvas_width, canvas_height, board_x, board_y, board_z);
+    return widget.div;
+}
 
-
-
-
-
-
+document.body.appendChild(make_conway(500,500,10,10,1));
 
 
 
