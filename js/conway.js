@@ -1,5 +1,6 @@
 import * as THREE from "./three.module.js"
 
+
 const BUILTIN_INITIALS = {
     "growth": [[4,4,1], [4,5,2], [4,6,3], [5,6,1], [6, 5, 2]],
 
@@ -231,26 +232,6 @@ function make_conway (canvas_width, canvas_height, board_x, board_y, board_z) {
 }
 
 document.body.appendChild(make_conway(500,500,7,7,7));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
