@@ -5,14 +5,9 @@ const BUILTIN_INITIALS = {
 
 }
 
-
-
-
 function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
-
-
 
 class conway_cell {
     constructor(x, y, z, geometry, visible, scene) {
@@ -59,12 +54,15 @@ class conway_cell {
 }
 
 class conway_board {
-    constructor (width, height, depth, geometry, scene) {
+    constructor (width, height, depth, geometry, scene, renderer, camera) {
         this.width = width;
         this.height = height;
         this.depth = depth;
         this.cells = [];
         this.group = new THREE.Group();
+        this.scene = scene
+        this.renderer = renderer
+        this.camera = camera
         for (let x = 0; x < width + 2; x++) {
             this.cells[x] = [];
             for (let y = 0; y < height + 2; y++) {
@@ -100,6 +98,12 @@ class conway_board {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 for (let z = 0; z < this.height; z++) {
+                    /* console.log(x, y, z);
+                    console.log(this.cells[x+1][y+1][z+1].alive);
+                    console.log(this.cells.length);
+                    console.log(this.cells[0].length);
+                    console.log(this.cells[0][0].length); */
+                    // console.log(this.get_cell(x, y, z));
                     this.get_cell(x, y, z).neighbors = 0;
                     for (let i = -1; i <= 1; i++) {
                         for (let j = -1; j <= 1; j++) {
@@ -119,6 +123,7 @@ class conway_board {
                 }
             }
         }
+
     }
 
     render () {
@@ -126,7 +131,7 @@ class conway_board {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 for (let z = 0; z < this.height; z++) {
-                this.get_cell(x, y, z).render()
+                    this.get_cell(x, y, z).render();
                 }
             }
         }
@@ -147,9 +152,8 @@ class conway_board {
     async run_conway() {
         while (true) {
             this.render();
-            board.set_neighbours();
-            board.update();
-            // board.group.rotateOnAxis(new THREE.Vector3(1, 1, 0), 0.1);
+            this.set_neighbours();
+            this.update();
             await sleep(1000);
         }
     }
@@ -176,13 +180,15 @@ class conway_widget {
             canvas: this.canvas
         });
         this.geometry = new THREE.BoxGeometry(1, 1, 1);
-        this.board = new conway_board(board_x, board_y, board_z, this.geometry, this.scene);
+        this.board = new conway_board(board_x, board_y, board_z, this.geometry, this.scene, this.renderer, this.camera);
 
         this.init_type = "growth"
 
         this.build_widget();
         this.seed();
+        this.board.run_conway();
     }
+
 
     restart () {
 
@@ -195,9 +201,9 @@ class conway_widget {
     }
 
     build_widget () {
-        for (const input of this.dimension_inputs) {
+        /* for (const input of this.dimension_inputs) {
             this.div.appendChild(input);
-        }
+        } */
         this.div.appendChild(this.canvas);
         this.div.appendChild(this.canvas);
         document.body.appendChild(this.renderer.domElement);
@@ -206,8 +212,7 @@ class conway_widget {
     make_input (prompt, default_value) {
         var input = document.createElement("input");
         input.type = "text";
-        input.onchange = function() {
-            if (input.value == "") {
+        input.onchange = function() { if (input.value == "") {
                 input.value = default_value;
             }
         }
@@ -216,24 +221,39 @@ class conway_widget {
         label.appendChild(input);
         return label;
     }
-
-
-
 }
-
-
-
-
-
 
 
 
 function make_conway (canvas_width, canvas_height, board_x, board_y, board_z) {
-    widget = new conway_widget(canvas_width, canvas_height, board_x, board_y, board_z);
+    var widget = new conway_widget(canvas_width, canvas_height, board_x, board_y, board_z);
     return widget.div;
 }
 
-document.body.appendChild(make_conway(500,500,10,10,1));
+document.body.appendChild(make_conway(500,500,7,7,7));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
