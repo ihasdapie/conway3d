@@ -99,12 +99,6 @@ class conway_board {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 for (let z = 0; z < this.height; z++) {
-                    /* console.log(x, y, z);
-                    console.log(this.cells[x+1][y+1][z+1].alive);
-                    console.log(this.cells.length);
-                    console.log(this.cells[0].length);
-                    console.log(this.cells[0][0].length); */
-                    // console.log(this.get_cell(x, y, z));
                     this.get_cell(x, y, z).neighbors = 0;
                     for (let i = -1; i <= 1; i++) {
                         for (let j = -1; j <= 1; j++) {
@@ -136,6 +130,7 @@ class conway_board {
                 }
             }
         }
+        this.group.rotateOnAxis(new THREE.Vector3(0, 1, 0), 0.1);
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -155,7 +150,7 @@ class conway_board {
             this.render();
             this.set_neighbours();
             this.update();
-            await sleep(1000);
+            await sleep(400);
         }
     }
 
@@ -179,9 +174,9 @@ class conway_widget {
         this.camera = new THREE.PerspectiveCamera( 75, this.canvas.width / this.canvas.height, 0.1, 1000 );
 
 
-        this.camera.position.x = 10; // TODO: Remove
-        this.camera.position.y = 10;
-        this.camera.position.z = 50;
+        this.camera.position.x = 5; // TODO: Remove
+        this.camera.position.y = 5;
+        this.camera.position.z = 30;
 
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.div.childNodes[0]
@@ -239,6 +234,7 @@ function make_conway (canvas_width, canvas_height, board_x, board_y, board_z) {
 var scripts = document.getElementsByTagName('script')
 var current_pos = scripts[scripts.length-1]
 current_pos.parentNode.insertBefore(make_conway(500, 500, 10, 10, 10), current_pos);
+
 
 
 
