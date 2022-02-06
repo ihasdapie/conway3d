@@ -163,10 +163,16 @@ class conway_board {
 
 class conway_widget {
     constructor (canvas_width, canvas_height, board_x, board_y, board_z) {
-        this.canvas = document.createElement("canvas");
-        this.canvas.width = canvas_width;
-        this.canvas.height = canvas_height;
         this.div = document.createElement("div");
+        // this.canvas = document.createElement("canvas");
+        this.div.appendChild(document.createElement("canvas"));
+        this.canvas = this.div.childNodes[0];
+        this.div.childNodes[0].width = canvas_width;
+        this.div.childNodes[0].height = canvas_height;
+
+        this.div.setAttribute("id", "conway_widget");
+
+
         this.dimension_inputs = [this.make_input("Width (x)", "500") , this.make_input("Height (y)", "500"), this.make_input("Depth (z)", "500")];
 
         this.scene = new THREE.Scene();
@@ -178,7 +184,7 @@ class conway_widget {
         this.camera.position.z = 50;
 
         this.renderer = new THREE.WebGLRenderer({
-            canvas: this.canvas
+            canvas: this.div.childNodes[0]
         });
         this.geometry = new THREE.BoxGeometry(1, 1, 1);
         this.board = new conway_board(board_x, board_y, board_z, this.geometry, this.scene, this.renderer, this.camera);
@@ -205,9 +211,7 @@ class conway_widget {
         /* for (const input of this.dimension_inputs) {
             this.div.appendChild(input);
         } */
-        this.div.appendChild(this.canvas);
-        this.div.appendChild(this.canvas);
-        document.body.appendChild(this.renderer.domElement);
+        this.div.appendChild(this.renderer.domElement);
     }
     
     make_input (prompt, default_value) {
@@ -231,11 +235,10 @@ function make_conway (canvas_width, canvas_height, board_x, board_y, board_z) {
     return widget.div;
 }
 
-document.body.appendChild(make_conway(500,500,7,7,7));
 
-
-
-
+var scripts = document.getElementsByTagName('script')
+var current_pos = scripts[scripts.length-1]
+current_pos.parentNode.insertBefore(make_conway(500, 500, 10, 10, 10), current_pos);
 
 
 
