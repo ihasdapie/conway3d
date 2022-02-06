@@ -15,7 +15,7 @@ Right now it will be just 500x500 but that is easily changed in `conway.js`
 Additional features that are half-baked currently include changing the initial state of the game, game size, etc. 
 It's the kind of thing that I *had* the intention of doing while writing it but kind of got bored after I got the minimum viable product working.
 
-I know that everyone likes `gif` demos but why not just see it live [here](https://chenbrian/ca/posts/2022/conway.3js)?
+I know that everyone likes `gif` demos but why not just see it live [here](https://chenbrian.ca/posts/2022/conway.3js)?
 
 
 ```
